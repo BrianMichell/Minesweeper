@@ -100,9 +100,11 @@ public class Runner {
 								} else {
 									image = new ImageIcon("bomb.jpg");
 									b.setIcon(image);
+									revealMines();
 									kaboom=true;
 								}
 						 }
+						 win();
 					 }
 				});
 			}
@@ -112,6 +114,12 @@ public class Runner {
 
 	}
 
+	
+	/**
+	 * Finds all the bombs on the field and adds the numbers to the Tile as needed
+	 * @param xCent The x coordinate of the Tile you are checking
+	 * @param yCent The y coordinate of the Tile you are checking
+	 */
 	public static void circle(int xCent, int yCent) {
 		for (int x = -1; x < 2; x++) {
 			for (int y = -1; y < 2; y++) {
@@ -126,6 +134,11 @@ public class Runner {
 		}
 	}
 
+	/**
+	 * Colors the number to look more like the actual game of Minesweeper
+	 * @param num The string version of the number
+	 * @return The color that the number should be
+	 */
 	private static Color getColor(String num) {
 		if (num.equals("1"))
 			return ONE;
@@ -149,6 +162,12 @@ public class Runner {
 
 	}
 
+	/**
+	 * Reveals every 0 on the board
+	 * @param x The x coordinate of the Tile
+	 * @param y The y coordinate of the Tile
+	 * @return Nothing. This is a void recursive method
+	 */
 	private static int reveal(int x, int y) {
 		//TODO Make it show the first ring of numbers other than 0
 		if(space[x][y].toString().equals("0") && grid[x][y].getText().equals("") || hasBlankNear(x,y) && text(x,y).equals("")) {
@@ -192,48 +211,69 @@ public class Runner {
 		return 0;
 	}
 	
+	/**
+	 * Reveals all the numbers next to a 0
+	 * @param x The x coordinate of the Tile
+	 * @param y The y coordinate of the Tile
+	 * @return true if the tile should be revealed and is on the board
+	 */
 	private static boolean hasBlankNear(int x, int y) {
-		if(x>0 && x<9 && y>0 && y<9) // Middle of board
-			if(isZero(text(x-1,y-1)) || isZero(text(x,y-1)) || isZero(text(x+1,y-1)) || isZero(text(x-1,y)) || isZero(text(x+1,y)) || isZero(text(x-1,y+1)) || isZero(text(x,y+1)) || isZero(text(x+1,y+1)))
-				return true;
-		if(x==0 && y>0 && y<9) // Far Left side of board
-			if(isZero(text(x,y-1)) || isZero(text(x+1,y+1)) || isZero(text(x+1,y-1)) || isZero(text(x+1,y)) || isZero(text(x,y+1)))
-				return true;
-		if(x==9 && y>0 && y<9) // Far right side of board
-			if(isZero(text(x,y-1)) || isZero(text(x,y+1)) || isZero(text(x-1,y-1)) || isZero(text(x-1,y)) || isZero(text(x-1,y+1)))
-				return true;
-		if(x>0 && x<9 && y==0) // Top of board
-			if(isZero(text(x-1,y)) || isZero(text(x+1,y)) || isZero(text(x-1,y+1)) || isZero(text(x,y+1)) || isZero(text(x+1,y+1)))
-				return true;
-		if(x>0 && x<9 && y==9) // Bottom of board
-			if(isZero(text(x-1,y)) || isZero(text(x+1,y)) || isZero(text(x-1,y-1)) || isZero(text(x,y-1)) || isZero(text(x+1,y-1)))
-				return true;
-		if(x==0 && y==0) // Top left corner
-			if(isZero(text(x+1,y)) || isZero(text(x+1,y+1)) || isZero(text(x,y+1)))
-				return true;
-		if(x==0 && y==9) // Bottom left corner
-			if(isZero(text(x+1,y)) || isZero(text(x+1,y-1)) || isZero(text(x,y-1)))
-				return true;
-		if(x==9 && y==0) // Top right corner
-			if(isZero(text(x-1,y)) || isZero(text(x-1,y+1)) || isZero(text(x,y+1)))
-				return true;
-		if(x==9 && y==9) // Bottom right corner
-			if(isZero(text(x-1,y)) || isZero(text(x,y-1)) || isZero(text(x-1,y-1)))
-				return true;
+		for(int xl=-1; xl<2; xl++) {
+			for(int yl=-1; yl<2; yl++) {
+				if(isZero(text(x+xl,y+yl))) {
+					return true;
+				}
+			}
+		}
 		return false;
 	}
 	
+	/**
+	 * Looks at the text displayed on the button. 
+	 * It will catch IndexOutOfBoundsExceptions and return "".
+	 * I removed the printing of the stack trace to eliminate any printed errors.
+	 * @param x The x coordinate of the Button
+	 * @param y The y coordinate of the Button
+	 * @return The text displayed on the button. If it is out of bounds it will return ""
+	 */
 	private static String text(int x, int y) {
 		try {
 			return (grid[x][y].getText());
 		} catch (IndexOutOfBoundsException e) {
-			e.printStackTrace();
 			return "";
 		}
 	}
 	
+	/**
+	 * Simplifies checking if a String (normally from the button) is zero.
+	 * @param s The string (from the button)
+	 * @return if the string is a 0
+	 */
 	private static boolean isZero(String s) {
 		return s.equals("0");
+	}
+	
+	private static boolean win() {
+		for(int x=0; x<10; x++) {
+			for(int y=0; y<10; y++) {
+				if(grid[x][y].getText().equals("") && !space[x][y].toString().equals("B")) {
+					return false;
+				}
+			}
+		}
+		System.out.println("Winner");
+		return true;
+	}
+	
+	private static void revealMines() {
+		for(int x=0; x<10; x++) {
+			for(int y=0; y<10; y++) {
+				if(space[x][y].toString().equals("B")) {
+					ImageIcon image = new ImageIcon("bomb.jpg");
+					grid[x][y].setIcon(image);
+				}
+			}
+		}
 	}
 
 }
