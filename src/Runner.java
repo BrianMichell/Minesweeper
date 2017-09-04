@@ -18,9 +18,9 @@ import com.github.BrianMichell.Utils.BriFrame;
 
 public class Runner {
 
-	private static Tile[][] space = new Tile[10][10];
-	private static JButton[][] grid = new JButton[10][10];
-	private static boolean[][] flag = new boolean[10][10];
+	private static Tile[][] space;
+	private static JButton[][] grid;
+	private static boolean[][] flag;
 	
 	private static boolean kaboom=false;
 
@@ -32,31 +32,43 @@ public class Runner {
 	private static final Color SIX = new Color(60, 200, 155);
 	private static final Color SEVEN = new Color(255, 255, 255);
 	private static final Color EIGHT = new Color(125, 125, 125);
+	
+	private static int xVal=10;
+	private static int yVal=10;
+	private static int bVal=10;
+	
+	public Runner() {
+		
+	}
 
-	public static void main(String[] args) {
+	public static void run(){
+				
+		space = new Tile[xVal][yVal];
+		grid = new JButton[xVal][yVal];
+		flag = new boolean[xVal][yVal];
 
-		GridLayout layout = new GridLayout(10, 10);
+		GridLayout layout = new GridLayout(xVal, yVal);
 		Border margin = new EmptyBorder(10, 10, 10, 10);
 		JFrame jf = new JFrame("Minesweeper");
 		BriFrame frame = new BriFrame(jf, layout);
-		Dimension d = new Dimension(700,700);
+		Dimension d = new Dimension(xVal*7,yVal*7);
 		JMenuBar menuBar = new JMenuBar();
 		JMenu menu = new JMenu();
 		// TODO Add the menu bar to allow user to change size/difficulty
 
 		// Creates a blank board
-		for (int x = 0; x < 10; x++) {
-			for (int y = 0; y < 10; y++) {
+		for (int x = 0; x < xVal; x++) {
+			for (int y = 0; y < yVal; y++) {
 				space[x][y] = new Tile();
 			}
 		}
 
 		// Generates bombs on the field.
 		Random rand = new Random();
-		int bombs = 10;
+		int bombs = bVal;
 		while (bombs > 0) {
-			int x = rand.nextInt(10);
-			int y = rand.nextInt(10);
+			int x = rand.nextInt(xVal);
+			int y = rand.nextInt(yVal);
 			if (!space[x][y].getBomb()) {
 				space[x][y].setBomb();
 				bombs--;
@@ -64,15 +76,15 @@ public class Runner {
 		}
 
 		// Correctly labels the spaces on the field
-		for (int x = 0; x < 10; x++) {
-			for (int y = 0; y < 10; y++) {
+		for (int x = 0; x < xVal; x++) {
+			for (int y = 0; y < yVal; y++) {
 				circle(x, y);
 			}
 		}
 
 		// Generates the board
-		for (int x = 0; x < 10; x++) {
-			for (int y = 0; y < 10; y++) {
+		for (int x = 0; x < xVal; x++) {
+			for (int y = 0; y < yVal; y++) {
 				String place = space[x][y].toString();
 				JButton b = new JButton();
 				b.setBorder(margin);
@@ -169,25 +181,24 @@ public class Runner {
 	 * @return Nothing. This is a void recursive method
 	 */
 	private static int reveal(int x, int y) {
-		//TODO Make it show the first ring of numbers other than 0
 		if(space[x][y].toString().equals("0") && grid[x][y].getText().equals("") || hasBlankNear(x,y) && text(x,y).equals("")) {
-			if(x>0 && y>0 && x<9 && y<9) { // Middle of the board
+			if(x>0 && y>0 && x<xVal-1 && y<yVal-1) { // Middle of the board
 				grid[x][y].setText(space[x][y].toString());
 				return reveal(x-1,y-1)+reveal(x,y-1)+reveal(x+1,y-1)+reveal(x-1,y)+reveal(x+1,y)+reveal(x-1,y+1)+reveal(x,y+1)+reveal(x+1,y+1);
 			}
-			if(x==0 && y>0 && y<9) { // Far left side of board
+			if(x==0 && y>0 && y<yVal-1) { // Far left side of board
 				grid[x][y].setText(space[x][y].toString());
 				return reveal(x,y-1)+reveal(x+1,y+1)+reveal(x+1,y)+reveal(x+1,y-1)+reveal(x,y+1);
 			}
-			if(x==9 && y>0 && y<9) { // Far right side of board
+			if(x==xVal-1 && y>0 && y<yVal-1) { // Far right side of board
 				grid[x][y].setText(space[x][y].toString());
 				return reveal(x,y-1)+reveal(x,y+1)+reveal(x-1,y-1)+reveal(x-1,y)+reveal(x-1,y+1);
 			}
-			if(x>0 && x<9 && y==0) { // Top of board
+			if(x>0 && x<xVal-1 && y==0) { // Top of board
 				grid[x][y].setText(space[x][y].toString());
 				return reveal(x-1,y)+reveal(x+1,y)+reveal(x-1,y+1)+reveal(x,y+1)+reveal(x+1,y+1);
 			}
-			if(x>0 && x<9 && y==9) { // Bottom of board
+			if(x>0 && x<xVal-1 && y==yVal-1) { // Bottom of board
 				grid[x][y].setText(space[x][y].toString());
 				return reveal(x-1,y)+reveal(x+1,y)+reveal(x-1,y-1)+reveal(x,y-1)+reveal(x+1,y-1);
 			}
@@ -195,15 +206,15 @@ public class Runner {
 				grid[x][y].setText(space[x][y].toString());
 				return reveal(x+1,y)+reveal(x+1,y+1)+reveal(x,y+1);
 			}
-			if(x==0 && y==9) { // Bottom left corner
+			if(x==0 && y==yVal-1) { // Bottom left corner
 				grid[x][y].setText(space[x][y].toString());
 				return reveal(x+1,y)+reveal(x+1,y-1)+reveal(x,y-1);
 			}
-			if(x==9 && y==0) { // Top right corner
+			if(x==xVal-1 && y==0) { // Top right corner
 				grid[x][y].setText(space[x][y].toString());
 				return reveal(x-1,y)+reveal(x-1,y+1)+reveal(x,y+1);
 			}
-			if(x==9 && y==9) { // Bottom right corner
+			if(x==xVal-1 && y==yVal-1) { // Bottom right corner
 				grid[x][y].setText(space[x][y].toString());
 				return reveal(x-1,y)+reveal(x,y-1)+reveal(x-1,y-1);
 			}
@@ -254,26 +265,33 @@ public class Runner {
 	}
 	
 	private static boolean win() {
-		for(int x=0; x<10; x++) {
-			for(int y=0; y<10; y++) {
+		for(int x=0; x<xVal; x++) {
+			for(int y=0; y<yVal; y++) {
 				if(grid[x][y].getText().equals("") && !space[x][y].toString().equals("B")) {
 					return false;
 				}
 			}
 		}
 		System.out.println("Winner");
+		//TODO Stop the timer
 		return true;
 	}
 	
 	private static void revealMines() {
-		for(int x=0; x<10; x++) {
-			for(int y=0; y<10; y++) {
+		for(int x=0; x<xVal; x++) {
+			for(int y=0; y<yVal; y++) {
 				if(space[x][y].toString().equals("B")) {
 					ImageIcon image = new ImageIcon("bomb.jpg");
 					grid[x][y].setIcon(image);
 				}
 			}
 		}
+	}
+	
+	public static void setVals(int x, int y, int bombs) {
+		xVal=x;
+		yVal=y;
+		bVal=bombs;
 	}
 
 }
