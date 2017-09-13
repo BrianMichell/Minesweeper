@@ -1,4 +1,3 @@
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.MouseAdapter;
@@ -8,8 +7,10 @@ import java.util.Random;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
@@ -22,23 +23,30 @@ public class Runner {
 	private static JButton[][] grid = new JButton[10][10];
 	private static boolean[][] flag = new boolean[10][10];
 	
+	private static boolean startTimer=false;
 	private static boolean kaboom=false;
-
-	private static final Color ONE = new Color(0, 0, 200);
-	private static final Color TWO = new Color(0, 150, 0);
-	private static final Color THREE = new Color(255, 0, 0);
-	private static final Color FOUR = new Color(20, 0, 120);
-	private static final Color FIVE = new Color(120, 0, 20);
-	private static final Color SIX = new Color(60, 200, 155);
-	private static final Color SEVEN = new Color(255, 255, 255);
-	private static final Color EIGHT = new Color(125, 125, 125);
+	private static boolean winner=false;
+	
+	private static final double bil=Math.pow(10, 9);
+	private static long initTime=0;
+	
+	private static JLabel time;
+	private static JLabel minesLeft;
 
 	public static void main(String[] args) {
 
-		GridLayout layout = new GridLayout(10, 10);
+		GridLayout layout = new GridLayout(1, 10);
 		Border margin = new EmptyBorder(10, 10, 10, 10);
 		JFrame jf = new JFrame("Minesweeper");
-		BriFrame frame = new BriFrame(jf, layout);
+		JPanel utils = new JPanel();
+		BriFrame frame = new BriFrame(jf, new GridLayout(11,1));
+		time = new JLabel();
+		minesLeft=new JLabel();
+		time.setText("0");
+		minesLeft.setText("10");
+		utils.add(time);
+		utils.add(minesLeft);
+		frame.getFrame().add(utils);
 		Dimension d = new Dimension(700,700);
 		JMenuBar menuBar = new JMenuBar();
 		JMenu menu = new JMenu();
@@ -71,28 +79,42 @@ public class Runner {
 		}
 
 		// Generates the board
+		Colors c = new Colors();
 		for (int x = 0; x < 10; x++) {
+			JPanel panel = new JPanel();
+			panel.setLayout(layout);
 			for (int y = 0; y < 10; y++) {
 				String place = space[x][y].toString();
 				JButton b = new JButton();
 				b.setBorder(margin);
-				b.setForeground(getColor(place));
-				frame.addButton(b);
+				b.setForeground(c.setColor(place));
+				panel.add(b);
 				grid[x][y]=b;
 				final int xf = x;
 				final int yf = y;
-				b.addMouseListener(new MouseAdapter(){
+				b.addMouseListener(new MouseAdapter(){ // Gets left and right clicks
 					 public void mouseClicked(MouseEvent e) {
+						 if(!startTimer) {
+							 startTimer=true;
+							 initTime=System.nanoTime();
+						 }
 						 ImageIcon image;
-						 if(SwingUtilities.isRightMouseButton(e) && text(xf,yf).equals("") && !kaboom) {
+						 if(SwingUtilities.isRightMouseButton(e) && text(xf,yf).equals("") && !kaboom && !winner) {
 							 if(!flag[xf][yf]) {
 								 image=new ImageIcon("flag.jpg");
+								 int tmp=Integer.parseInt(minesLeft.getText());
+								 if(tmp>0)
+									 tmp--;
+								 minesLeft.setText(Integer.toString(tmp));
 							 } else {
 								 image=new ImageIcon("");
+								 int tmp=Integer.parseInt(minesLeft.getText());
+								 tmp++;
+								 minesLeft.setText(Integer.toString(tmp));
 							 }
 							 flag[xf][yf]=!flag[xf][yf];
 							 b.setIcon(image);
-						 } else if(SwingUtilities.isLeftMouseButton(e) && !kaboom && !flag[xf][yf]) {
+						 } else if(SwingUtilities.isLeftMouseButton(e) && !kaboom && !flag[xf][yf] && !winner) {
 							 String placef = space[xf][yf].toString();
 								reveal(xf, yf);
 								if(!placef.equals("B")) {
@@ -108,9 +130,28 @@ public class Runner {
 					 }
 				});
 			}
+			frame.getFrame().add(panel);
 		}
 
 		frame.getFrame().setSize(d);
+		
+		new Thread(()->{
+			while(!winner && !kaboom) {
+				if(startTimer) {
+					getTime();
+				}
+				try {
+					Thread.sleep(1);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+			if(winner) {
+				time.setText(time.getText()+" Winner");
+			} else {
+				time.setText(time.getText()+" Looser");
+			}
+		}).start();
 
 	}
 
@@ -134,33 +175,8 @@ public class Runner {
 		}
 	}
 
-	/**
-	 * Colors the number to look more like the actual game of Minesweeper
-	 * @param num The string version of the number
-	 * @return The color that the number should be
-	 */
-	private static Color getColor(String num) {
-		if (num.equals("1"))
-			return ONE;
-		if (num.equals("2"))
-			return TWO;
-		if (num.equals("3"))
-			return THREE;
-		if (num.equals("4"))
-			return FOUR;
-		if (num.equals("5"))
-			return FIVE;
-		if (num.equals("6"))
-			return SIX;
-		if (num.equals("7"))
-			return SEVEN;
-		if (num.equals("8"))
-			return EIGHT;
-		if (num.equals("0"))
-			return new Color(0, 0, 0);
-		return new Color(200, 200, 200);
+	
 
-	}
 
 	/**
 	 * Reveals every 0 on the board
@@ -169,7 +185,6 @@ public class Runner {
 	 * @return Nothing. This is a void recursive method
 	 */
 	private static int reveal(int x, int y) {
-		//TODO Make it show the first ring of numbers other than 0
 		if(space[x][y].toString().equals("0") && grid[x][y].getText().equals("") || hasBlankNear(x,y) && text(x,y).equals("")) {
 			if(x>0 && y>0 && x<9 && y<9) { // Middle of the board
 				grid[x][y].setText(space[x][y].toString());
@@ -253,18 +268,28 @@ public class Runner {
 		return s.equals("0");
 	}
 	
+	/**
+	 * Tests to see if the player has won the game.
+	 * @return true if there are no blank spaces or bombs clicked, false otherwise
+	 */
 	private static boolean win() {
+		int left = Integer.parseInt(minesLeft.getText());
 		for(int x=0; x<10; x++) {
 			for(int y=0; y<10; y++) {
-				if(grid[x][y].getText().equals("") && !space[x][y].toString().equals("B")) {
+				if(grid[x][y].getText().equals("") && !space[x][y].toString().equals("B") && left>0) {
+					System.out.println(grid[x][y].getText().equals("") +" "+ !space[x][y].toString().equals("B") +" "+ (left>0));
 					return false;
 				}
 			}
 		}
-		System.out.println("Winner");
+		System.out.println("Winner"); // Print the win to the console for debugging
+		winner=true;
 		return true;
 	}
 	
+	/**
+	 * If a bomb is clicked, all the mines on the field will be shown.
+	 */
 	private static void revealMines() {
 		for(int x=0; x<10; x++) {
 			for(int y=0; y<10; y++) {
@@ -274,6 +299,17 @@ public class Runner {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Get the change in time from the first reveal on the field to the current time.
+	 * @return the time in seconds that has elapsed.
+	 */
+	private static int getTime() {
+		long current = System.nanoTime();
+		int t = (int)(Math.round((current-initTime)/bil));
+		time.setText(Integer.toString(t));
+		return (int)(Math.round((current-initTime)/bil));
 	}
 
 }

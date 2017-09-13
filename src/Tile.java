@@ -2,12 +2,10 @@
 public class Tile {
 	
 	private boolean bomb;
-	private boolean revealed;
 	private int near;
 	
 	public Tile() {
 		bomb=false;
-		revealed=false;
 		near=0;
 	}
 	
@@ -19,20 +17,8 @@ public class Tile {
 		bomb=true;
 	}
 	
-	public void setNear(int close) {
-		near=close;
-	}
-	
 	public void tickNear() {
 		near++;
-	}
-	
-	public void reveal() {
-		revealed=true;
-	}
-	
-	public boolean isRevealed() {
-		return revealed;
 	}
 	
 	public String toString() {
